@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  database:
+    image: mongo
+    container_name: readwise-database
+    ports:
+      - "27017:27017"
+    volumes:
+      - readwisemongo:/data/db
+      - ./database/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+
+  monolith:
+    container_name: readwise-monolith
+    build:
+      context: .
+      dockerfile: ./docker/monolith/dev/Dockerfile
+    env_file:
+      - .env.local
+    depends_on:
+      - database
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+
+volumes:
+  readwisemongo:
