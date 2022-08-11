@@ -17,7 +17,7 @@ func NewBookController() *BookController {
 }
 
 type BookController struct {
-	controller.GinController[BookModel, BookDto]
+	controller.GinController[BookModel, BookDto, BookRepository]
 }
 
 func (c *BookController) FindOne(ctx *gin.Context) {
@@ -48,9 +48,8 @@ func (c *BookController) CreateOne(ctx *gin.Context) {
 	}
 
 	model := book.ToModel()
-	id := c.Repository.CreateOne(ctx, model)
-	book.ID = id
-	ctx.JSON(http.StatusCreated, book)
+	response := c.Repository.InsertBookAndAuthor(ctx, model)
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (c *BookController) CreateMultiple(ctx *gin.Context) {
@@ -65,13 +64,8 @@ func (c *BookController) CreateMultiple(ctx *gin.Context) {
 	}
 
 	booksModels := repository.MapDtosToModels[BookModel](booksBody)
-
-	ids := c.Repository.CreateMultiple(ctx, booksModels)
-	for i := range booksBody {
-		booksBody[i].ID = ids[i]
-	}
-
-	ctx.JSON(http.StatusCreated, booksBody)
+	response := c.Repository.CreateMultiple(ctx, booksModels)
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (c *BookController) UpdateOne(ctx *gin.Context) {
@@ -82,9 +76,8 @@ func (c *BookController) UpdateOne(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 	}
 
-	id := c.Repository.UpdateOne(ctx, book_id, book.ToModel())
-	book.ID = id
-	ctx.JSON(http.StatusPartialContent, book)
+	response := c.Repository.UpdateOne(ctx, book_id, book.ToModel())
+	ctx.JSON(http.StatusPartialContent, response)
 }
 
 func (c *BookController) UpdateBy(ctx *gin.Context) {

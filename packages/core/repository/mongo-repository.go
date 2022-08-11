@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var MongoDatabase = GetMongoClient(context.Background()).Database("readwise")
+var MongoClient = GetMongoClient(context.Background())
+var MongoDatabase = MongoClient.Database("readwise")
 
 func GetMongoClient(ctx context.Context) *mongo.Client {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://database:27017"))
@@ -31,7 +31,7 @@ func GetMongoCollection(collectionName string) *mongo.Collection {
 	return collection
 }
 
-type MongoRepository[Model RepositoryModel[Dto], Dto RepositoryDto[Model]] struct {
+type MongoRepository[Model RepositoryModel[Dto], Dto RepositoryDto[Model, Dto]] struct {
 	CollectionName string
 	Repository[Model, Dto]
 }
@@ -80,7 +80,7 @@ func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) DTO 
 	return response.ToEntity()
 }
 
-func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) string {
+func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) DTO {
 	collection := MongoDatabase.Collection(r.CollectionName)
 	result, err := collection.InsertOne(ctx, m)
 
@@ -88,10 +88,12 @@ func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) st
 		panic(err)
 	}
 
-	return result.InsertedID.(primitive.ObjectID).Hex()
+	response := m.ToEntity().SetID(result.InsertedID)
+
+	return response
 }
 
-func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Model) []string {
+func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Model) []DTO {
 	collection := MongoDatabase.Collection(r.CollectionName)
 	var values []interface{}
 
@@ -105,24 +107,25 @@ func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Mo
 		panic(err)
 	}
 
-	response := []string{}
+	response := []DTO{}
 
-	for _, v := range result.InsertedIDs {
-		response = append(response, v.(primitive.ObjectID).Hex())
+	for i, v := range result.InsertedIDs {
+		response = append(response, m[i].ToEntity().SetID(v))
 	}
 
 	return response
 }
 
-func (r *MongoRepository[Model, DTO]) UpdateOne(ctx context.Context, id string, m Model) string {
+func (r *MongoRepository[Model, DTO]) UpdateOne(ctx context.Context, id string, m Model) DTO {
 	collection := MongoDatabase.Collection(r.CollectionName)
-	_, err := collection.UpdateByID(ctx, GetPrimitiveObjectIDFromString(id), map[string]Model{"$set": m})
+	primitiveID := GetPrimitiveObjectIDFromString(id)
+	_, err := collection.UpdateByID(ctx, primitiveID, map[string]Model{"$set": m})
 
 	if err != nil {
 		panic(err)
 	}
 
-	return id
+	return m.ToEntity().SetID(primitiveID)
 }
 
 func (r *MongoRepository[Model, DTO]) UpdateBy(ctx context.Context, where Model, m Model) int64 {
