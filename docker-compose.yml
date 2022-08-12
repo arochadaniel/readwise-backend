@@ -8,7 +8,7 @@ services:
       - "27017:27017"
     volumes:
       - readwisemongo:/data/db
-      - ./database/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - ./database/mongo:/docker-entrypoint-initdb.d
 
   monolith:
     container_name: readwise-monolith
