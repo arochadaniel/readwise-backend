@@ -1,11 +1,15 @@
 package main
 
 import (
-	"readwise-backend/packages/core/routing"
+	"readwise-backend/packages/domain/authors"
 	"readwise-backend/packages/domain/books"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	books.RegisterBookRoutes()
-	routing.Router.Run(":8080")
+	var router = gin.Default()
+	books.RegisterBookRoutes(router)
+	authors.RegisterAuthorsRoutes(router)
+	router.Run(":8080")
 }

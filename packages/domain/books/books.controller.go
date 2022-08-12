@@ -9,10 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewBookController() *BookController {
-	BookRepository := NewBookRepository()
+func NewBookController(r *BookRepository) *BookController {
 	controller := BookController{}
-	controller.Repository = BookRepository
+	controller.Repository = r
 	return &controller
 }
 
