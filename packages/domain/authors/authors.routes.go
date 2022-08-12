@@ -2,10 +2,7 @@ package authors
 
 import "github.com/gin-gonic/gin"
 
-var ar = NewAuthorsRepository()
-var ac = NewAuthorsController(ar)
-
-func RegisterAuthorsRoutes(router *gin.Engine) {
+func RegisterAuthorsRoutes(router *gin.Engine, ac *AuthorsController) {
 	group := router.Group("/authors")
 	group.POST("/", ac.CreateOne)
 	group.PATCH("/:id", ac.UpdateOne)

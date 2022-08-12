@@ -4,6 +4,9 @@ import (
 	"context"
 )
 
+type DatabaseContainer[CDB any] struct {
+	DB *CDB
+}
 type RepositoryDto[Model any, Dto any] interface {
 	SetID(ID interface{}) Dto
 	ToModel() Model

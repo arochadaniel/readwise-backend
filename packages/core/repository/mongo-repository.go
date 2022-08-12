@@ -5,39 +5,20 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var MongoClient = GetMongoClient(context.Background())
-var MongoDatabase = MongoClient.Database("readwise")
-
-func GetMongoClient(ctx context.Context) *mongo.Client {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://database:27017"))
-
-	if err != nil {
-		panic("error instantiating mongo client")
-	}
-
-	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		panic(err)
-	}
-
-	return client
-}
-
-func GetMongoCollection(collectionName string) *mongo.Collection {
-	collection := MongoDatabase.Collection(collectionName)
-	return collection
+type MongoDatabaseContainer struct {
+	DatabaseContainer[mongo.Database]
 }
 
 type MongoRepository[Model RepositoryModel[Dto], Dto RepositoryDto[Model, Dto]] struct {
 	CollectionName string
+	DBContainer    *MongoDatabaseContainer
 	Repository[Model, Dto]
 }
 
 func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) []DTO {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	cursor, err := collection.Find(ctx, d)
 
 	if err != nil {
@@ -62,7 +43,7 @@ func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) []DT
 }
 
 func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) DTO {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result := collection.FindOne(ctx, m)
 
 	if result.Err() != nil {
@@ -81,7 +62,7 @@ func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) DTO 
 }
 
 func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) DTO {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result, err := collection.InsertOne(ctx, m)
 
 	if err != nil {
@@ -94,7 +75,7 @@ func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) DT
 }
 
 func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Model) []DTO {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	var values []interface{}
 
 	for i := range m {
@@ -117,7 +98,7 @@ func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Mo
 }
 
 func (r *MongoRepository[Model, DTO]) UpdateOne(ctx context.Context, id string, m Model) DTO {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	primitiveID := GetPrimitiveObjectIDFromString(id)
 	_, err := collection.UpdateByID(ctx, primitiveID, map[string]Model{"$set": m})
 
@@ -129,7 +110,7 @@ func (r *MongoRepository[Model, DTO]) UpdateOne(ctx context.Context, id string, 
 }
 
 func (r *MongoRepository[Model, DTO]) UpdateBy(ctx context.Context, where Model, m Model) int64 {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result, err := collection.UpdateMany(ctx, where, map[string]Model{"$set": m})
 
 	if err != nil {
@@ -140,7 +121,7 @@ func (r *MongoRepository[Model, DTO]) UpdateBy(ctx context.Context, where Model,
 }
 
 func (r *MongoRepository[Model, DTO]) DeleteOne(ctx context.Context, filter Model) int64 {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result, err := collection.DeleteOne(ctx, filter)
 
 	if err != nil {
@@ -151,7 +132,7 @@ func (r *MongoRepository[Model, DTO]) DeleteOne(ctx context.Context, filter Mode
 }
 
 func (r *MongoRepository[Model, DTO]) DeleteBy(ctx context.Context, where Model) int64 {
-	collection := MongoDatabase.Collection(r.CollectionName)
+	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result, err := collection.DeleteMany(ctx, where)
 
 	if err != nil {

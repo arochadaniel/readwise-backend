@@ -4,10 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var br = NewBookRepository()
-var bc = NewBookController(br)
-
-func RegisterBookRoutes(router *gin.Engine) {
+func RegisterBookRoutes(router *gin.Engine, bc *BookController) {
 	var group = router.Group("/books")
 	group.GET("", bc.FindAll)
 	group.GET("/:id", bc.FindOne)

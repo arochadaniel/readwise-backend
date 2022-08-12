@@ -1,6 +1,8 @@
 package repository
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 func GetPrimitiveObjectIDFromString(id string) primitive.ObjectID {
 	objectID, err := primitive.ObjectIDFromHex(id)
