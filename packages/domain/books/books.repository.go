@@ -12,10 +12,9 @@ type BookRepository struct {
 }
 
 func NewBookRepository(db *r.MongoDatabaseContainer) *BookRepository {
-	repo := BookRepository{}
-	repo.DBContainer = db
-	repo.MongoRepository = &r.MongoRepository[BookModel, BookDto]{CollectionName: "books"}
-	return &repo
+	repo := &BookRepository{}
+	repo.MongoRepository = &r.MongoRepository[BookModel, BookDto]{CollectionName: "books", DBContainer: db}
+	return repo
 }
 
 func (br *BookRepository) InsertBookAndAuthor(ctx context.Context, b BookModel) BookDto {

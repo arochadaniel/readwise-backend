@@ -17,12 +17,12 @@ type MongoRepository[Model RepositoryModel[Dto], Dto RepositoryDto[Model, Dto]] 
 	Repository[Model, Dto]
 }
 
-func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) []DTO {
+func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) ([]DTO, error) {
 	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	cursor, err := collection.Find(ctx, d)
 
 	if err != nil {
-		log := fmt.Sprintf("no items found in collection %s", r.CollectionName)
+		log := fmt.Sprintf("no items found in collection %s, err: %d", r.CollectionName, err)
 		panic(log)
 	}
 
@@ -33,21 +33,22 @@ func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) []DT
 		panic(cursorErr)
 	}
 
-	response := []DTO{}
+	response := MapModelsToDtos[Model, DTO](result)
 
-	for i := range result {
-		response = append(response, result[i].ToEntity())
-	}
-
-	return response
+	return response, nil
 }
 
-func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) DTO {
+func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) (DTO, error) {
 	collection := r.DBContainer.DB.Collection(r.CollectionName)
 	result := collection.FindOne(ctx, m)
 
 	if result.Err() != nil {
-		log := fmt.Sprintf("no items found in collection %s", r.CollectionName)
+		if result.Err() == mongo.ErrNoDocuments {
+			var emptyDTO DTO
+			return emptyDTO, result.Err()
+		}
+
+		log := fmt.Sprintf("no items found in collection %s, err: %d", r.CollectionName, result.Err())
 		panic(log)
 	}
 
@@ -58,7 +59,7 @@ func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) DTO 
 		panic(err)
 	}
 
-	return response.ToEntity()
+	return response.ToEntity(), nil
 }
 
 func (r *MongoRepository[Model, DTO]) CreateOne(ctx context.Context, m Model) DTO {

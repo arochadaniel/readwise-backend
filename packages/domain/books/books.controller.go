@@ -22,7 +22,12 @@ type BookController struct {
 func (c *BookController) FindOne(ctx *gin.Context) {
 	id := ctx.Param("id")
 	objectID := repository.GetPrimitiveObjectIDFromString(id)
-	book := c.Repository.FindOne(ctx, BookModel{ID: objectID})
+	book, err := c.Repository.FindOne(ctx, BookModel{ID: objectID})
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, nil)
+	}
+
 	ctx.JSON(http.StatusOK, book)
 }
 
@@ -33,7 +38,11 @@ func (c *BookController) FindAll(ctx *gin.Context) {
 	}
 
 	filter := body.ToModel()
-	books := c.Repository.FindAll(ctx, filter)
+	books, err := c.Repository.FindAll(ctx, filter)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, nil)
+	}
 
 	ctx.JSON(http.StatusOK, books)
 }

@@ -17,8 +17,8 @@ type RepositoryModel[Dto any] interface {
 }
 
 type Repository[Model RepositoryModel[Dto], Dto RepositoryDto[Model, Dto]] interface {
-	FindAll(ctx context.Context, m Model) []Dto
-	FindOne(ctx context.Context, m Model) Dto
+	FindAll(ctx context.Context, m Model) ([]Dto, error)
+	FindOne(ctx context.Context, m Model) (Dto, error)
 	CreateOne(ctx context.Context, m Model) Dto
 	CreateMultiple(ctx context.Context, m []Model) []Dto
 	UpdateOne(ctx context.Context, ID string, m Model) Dto

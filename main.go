@@ -1,24 +1,20 @@
 package main
 
 import (
+	"context"
 	"readwise-backend/packages/core/repository"
+	"readwise-backend/packages/core/routing"
 	"readwise-backend/packages/domain/authors"
 	"readwise-backend/packages/domain/books"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := gin.Default()
+	router := routing.SetupUpAppRouter()
 	db := repository.SetUpMongoDatabaseContainer()
+	defer db.DB.Client().Disconnect(context.Background())
 
-	var br = books.NewBookRepository(db)
-	var bc = books.NewBookController(br)
-	books.RegisterBookRoutes(router, bc)
-
-	var ar = authors.NewAuthorsRepository(db)
-	var ac = authors.NewAuthorsController(ar)
-	authors.RegisterAuthorsRoutes(router, ac)
+	books.SetupBooksPackage(router, db)
+	authors.SetupAuthorsPackage(router, db)
 
 	router.Run(":8080")
 }

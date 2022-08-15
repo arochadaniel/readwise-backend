@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -10,13 +11,19 @@ import (
 
 func SetUpMongoDatabaseContainer() *MongoDatabaseContainer {
 	db := GetMongoClient(context.Background()).Database("readwise")
-	dbContainer := &MongoDatabaseContainer{}
-	dbContainer.DB = db
-	return dbContainer
+	dbContainer := MongoDatabaseContainer{}
+	dbContainer.DatabaseContainer.DB = db
+	return &dbContainer
 }
 
 func GetMongoClient(ctx context.Context) *mongo.Client {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://database:27017"))
+	uri := os.Getenv("MONGO_URI")
+
+	if uri == "" {
+		panic("INVALID/EMPTY MONGO DB URI")
+	}
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 
 	if err != nil {
 		panic("error instantiating mongo client")
