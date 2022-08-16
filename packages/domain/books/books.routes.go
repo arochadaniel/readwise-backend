@@ -8,7 +8,7 @@ func RegisterBookRoutes(router *gin.Engine, bc *BookController) {
 	var group = router.Group("/books")
 	group.GET("", bc.FindAll)
 	group.GET("/:id", bc.FindOne)
-	group.POST("", bc.CreateOne)
+	group.POST("", bc.InsertBookAndAuthor)
 	group.POST("/multiple", bc.CreateMultiple)
 	group.PATCH("/:id", bc.UpdateOne)
 	group.PATCH("", bc.UpdateBy)

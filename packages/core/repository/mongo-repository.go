@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -17,9 +18,9 @@ type MongoRepository[Model RepositoryModel[Dto], Dto RepositoryDto[Model, Dto]] 
 	Repository[Model, Dto]
 }
 
-func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) ([]DTO, error) {
+func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, m Model) ([]DTO, error) {
 	collection := r.DBContainer.DB.Collection(r.CollectionName)
-	cursor, err := collection.Find(ctx, d)
+	cursor, err := collection.Find(ctx, m)
 
 	if err != nil {
 		log := fmt.Sprintf("no items found in collection %s, err: %d", r.CollectionName, err)
@@ -40,7 +41,7 @@ func (r *MongoRepository[Model, DTO]) FindAll(ctx context.Context, d Model) ([]D
 
 func (r *MongoRepository[Model, DTO]) FindOne(ctx context.Context, m Model) (DTO, error) {
 	collection := r.DBContainer.DB.Collection(r.CollectionName)
-	result := collection.FindOne(ctx, m)
+	result := collection.FindOne(ctx, map[string]primitive.ObjectID{"_id": m.GetID()})
 
 	if result.Err() != nil {
 		if result.Err() == mongo.ErrNoDocuments {
@@ -92,7 +93,8 @@ func (r *MongoRepository[Model, DTO]) CreateMultiple(ctx context.Context, m []Mo
 	response := []DTO{}
 
 	for i, v := range result.InsertedIDs {
-		response = append(response, m[i].ToEntity().SetID(v))
+		toAppend := m[i].ToEntity().SetID(v)
+		response = append(response, toAppend)
 	}
 
 	return response
@@ -107,7 +109,9 @@ func (r *MongoRepository[Model, DTO]) UpdateOne(ctx context.Context, id string, 
 		panic(err)
 	}
 
-	return m.ToEntity().SetID(primitiveID)
+	response := m.ToEntity().SetID(primitiveID)
+
+	return response
 }
 
 func (r *MongoRepository[Model, DTO]) UpdateBy(ctx context.Context, where Model, m Model) int64 {

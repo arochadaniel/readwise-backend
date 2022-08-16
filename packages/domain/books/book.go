@@ -9,12 +9,16 @@ import (
 )
 
 type BookModel struct {
-	ID                         primitive.ObjectID   `bson:"_id,omitempty"`
-	Title                      string               `bson:"title,omitempty"`
-	Description                string               `bson:"description,omitempty"`
-	Created_at                 time.Time            `bson:"created_at,omitempty"`
-	Author                     authors.AuthorSubset `bson:"author,omitempty"`
+	ID                         primitive.ObjectID    `bson:"_id,omitempty"`
+	Title                      string                `bson:"title,omitempty"`
+	Description                string                `bson:"description,omitempty"`
+	Created_at                 time.Time             `bson:"created_at,omitempty"`
+	Author                     *authors.AuthorSubset `bson:"author,omitempty"`
 	r.RepositoryModel[BookDto] `bson:"-"`
+}
+
+func (b BookModel) GetID() primitive.ObjectID {
+	return b.ID
 }
 
 func (b BookModel) ToEntity() BookDto {
@@ -28,11 +32,11 @@ func (b BookModel) ToEntity() BookDto {
 }
 
 type BookDto struct {
-	ID                                  string               `json:"id,omitempty"`
-	Title                               string               `json:"title,omitempty"`
-	Description                         string               `json:"description,omitempty"`
-	Created_at                          time.Time            `json:"created_at,omitempty"`
-	Author                              authors.AuthorSubset `json:"author,omitempty"`
+	ID                                  string                `json:"id,omitempty"`
+	Title                               string                `json:"title,omitempty"`
+	Description                         string                `json:"description,omitempty"`
+	Created_at                          time.Time             `json:"created_at,omitempty"`
+	Author                              *authors.AuthorSubset `json:"author,omitempty"`
 	r.RepositoryDto[BookModel, BookDto] `json:"-"`
 }
 
@@ -49,5 +53,10 @@ func (b BookDto) ToModel() BookModel {
 func (b BookDto) SetID(ID interface{}) BookDto {
 	IDToSet := ID.(primitive.ObjectID).Hex()
 	b.ID = IDToSet
+	return b
+}
+
+func (b BookDto) Init() BookDto {
+	b.Created_at = time.Now()
 	return b
 }

@@ -2,17 +2,21 @@ package repository
 
 import (
 	"context"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type DatabaseContainer[CDB any] struct {
 	DB *CDB
 }
 type RepositoryDto[Model any, Dto any] interface {
+	Init() Dto
 	SetID(ID interface{}) Dto
 	ToModel() Model
 }
 
 type RepositoryModel[Dto any] interface {
+	GetID() primitive.ObjectID
 	ToEntity() Dto
 }
 

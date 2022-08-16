@@ -6,8 +6,8 @@ type AuthorsRepository struct {
 	*repository.MongoRepository[AuthorModel, AuthorDto]
 }
 
-func NewAuthorsRepository(db *repository.MongoDatabaseContainer) *AuthorsRepository {
+func NewAuthorsRepository(db *repository.MongoDatabaseContainer) AuthorsRepository {
 	repo := AuthorsRepository{}
 	repo.MongoRepository = &repository.MongoRepository[AuthorModel, AuthorDto]{CollectionName: "authors", DBContainer: db}
-	return &repo
+	return repo
 }

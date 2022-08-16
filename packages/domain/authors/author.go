@@ -8,8 +8,8 @@ import (
 )
 
 type AuthorSubset struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string `json:"name,omitempty" bson:"name,omitempty"`
+	Description string `json:"description,omitempty" bson:"description,omitempty"`
 }
 
 type AuthorModel struct {
@@ -18,6 +18,10 @@ type AuthorModel struct {
 	Description                           string             `bson:"description,omitempty"`
 	Created_at                            time.Time          `bson:"created_at,omitempty"`
 	repository.RepositoryModel[AuthorDto] `bson:"-"`
+}
+
+func (a AuthorModel) GetID() primitive.ObjectID {
+	return a.ID
 }
 
 func (a AuthorModel) ToEntity() AuthorDto {
@@ -37,17 +41,22 @@ type AuthorDto struct {
 	repository.RepositoryDto[AuthorModel, AuthorDto] `json:"-"`
 }
 
-func (b AuthorDto) ToModel() AuthorModel {
+func (a AuthorDto) ToModel() AuthorModel {
 	return AuthorModel{
-		ID:          repository.GetPrimitiveObjectIDFromString(b.ID),
-		Name:        b.Name,
-		Description: b.Description,
-		Created_at:  b.Created_at,
+		ID:          repository.GetPrimitiveObjectIDFromString(a.ID),
+		Name:        a.Name,
+		Description: a.Description,
+		Created_at:  a.Created_at,
 	}
 }
 
-func (b AuthorDto) SetID(ID interface{}) AuthorDto {
+func (a AuthorDto) SetID(ID interface{}) AuthorDto {
 	IDToSet := ID.(primitive.ObjectID).Hex()
-	b.ID = IDToSet
-	return b
+	a.ID = IDToSet
+	return a
+}
+
+func (a AuthorDto) Init() AuthorDto {
+	a.Created_at = time.Now()
+	return a
 }
